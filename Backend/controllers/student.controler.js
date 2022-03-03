@@ -278,3 +278,38 @@ module.exports.getAllByToken = async (req, res) => {
     }
 
 }
+
+// order by name
+async function objSortFunction(field, sort) {
+    try {
+        var objSort;
+        switch (field) {
+            case 'bhyt':
+                objSort = {
+                    "BHYT": sort === 'asc' ? 'asc' : 'desc',
+                }
+                break;
+            case 'name':
+                objSort = {
+                    "name": sort === 'asc' ? 'asc' : 'desc',
+                }
+                break;
+            case 'classCode':
+                objSort = {
+                    "classcode": sort === 'asc' ? 'asc' : 'desc',
+                }
+                break;
+            case 'gender':
+                objSort = {
+                    "gender": sort === 'asc' ? 'asc' : 'desc',
+                }
+                break;
+            default:
+                break;
+        }
+        return objSort;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+}
