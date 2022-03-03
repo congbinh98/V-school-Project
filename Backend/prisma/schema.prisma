@@ -1,11 +1,197 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-generator client {
-  provider = "prisma-client-js"
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+model role {
+  role    String    @id @db.VarChar(45)
+  account account[]
+}
+
+model account {
+  id           String         @id @db.VarChar(200)
+  name         String
+  email        String?        @unique @db.VarChar(45)
+  password     String         @db.VarChar(50)
+  age          Int?
+  address      String?        @db.VarChar(200)
+  status       String?        @db.VarChar(45)
+  createDate   DateTime       @default(now()) @db.Timestamp(6)
+  updateDate   DateTime       @default(now()) @updatedAt @db.Timestamp(6)
+  accRole      String         @db.VarChar(45)
+  note         String?        @db.Text
+  school       school?
+  parent       parent?
+  super_admin  super_admin?
+  gender       Gender?        @default(UNKNOW)
+  notification notification[]
+  Role         role?          @relation(fields: [accRole], references: [role])
+}
+
+model school {
+  id        Int       @id @default(autoincrement())
+  MST       String    @unique @db.VarChar(200)
+  phone     String?   @unique @db.VarChar(45)
+  accountId String?   @unique @db.VarChar(200)
+  account   account?  @relation(fields: [accountId], references: [id])
+  bills     bill[]
+  students  student[]
+  invoice  invoice[]
+  merchant_code_key merchant_code_key?
+}
+
+model parent {
+  id        Int       @id @default(autoincrement())
+  phone     String    @unique @db.VarChar(45)
+  accountId String?   @unique @db.VarChar(200)
+  childIds  String?   @db.VarChar(200)
+  account   account?  @relation(fields: [accountId], references: [id])
+  bills     bill[]
+  childrens student[]
+}
+
+model super_admin {
+  id        Int      @id @default(autoincrement())
+  userName  String   @unique @db.VarChar(45)
+  accountId String?  @unique @db.VarChar(200)
+  account   account? @relation(fields: [accountId], references: [id])
+}
+
+model notification {
+  id               Int               @id @default(autoincrement())
+  from             String            @db.VarChar(200)
+  to               String            @db.VarChar(200)
+  type             String            @db.VarChar(45)
+  content          String            @db.VarChar(200)
+  isRead           Boolean           @default(false)
+  account          account?          @relation(fields: [to], references: [id])
+  notificationType notificationType? @relation(fields: [type], references: [type])
+}
+
+model notificationType {
+  type         String         @id @db.VarChar(45)
+  notification notification[]
+}
+
+model invoice {
+  id          String   @id @db.VarChar(200)
+  MST         String   @db.VarChar(200)
+  classCode   String?      @db.VarChar(45)
+  className   String?  @db.VarChar(200)
+  schoolName  String?  @db.VarChar(200)
+  name        String?  @db.VarChar(200)
+  description String?  @db.VarChar(200)
+  ammount     Decimal  @db.Decimal(10, 0)
+  tel1        String   @db.VarChar(45)
+  tel2        String?  @db.VarChar(45)
+  month       String       @db.VarChar(2)
+  updateDate  String?     @db.VarChar(45)
+  bank        String?  @db.VarChar(200)
+  BHYT        String   @db.VarChar(200)
+  note        String?  @db.VarChar(200)
+  school      school?   @relation(fields: [MST], references:[MST])
+  invoice_mapping invoice_mapping?
+  student student?       @relation(fields: [BHYT],references: [BHYT])
+  bill_mapping_history bill_mapping_history[]
+}
+
+enum Unit {
+  MONTH
+  QUATER
+  YEAR
+  SEMESTER
+}
+
+model bill {
+  id               String            @id @db.VarChar(200)
+  amount           Decimal           @db.Decimal(10, 0)
+  status           String            @db.VarChar(45)
+  createDate       DateTime          @default(now()) @db.Timestamp(6)
+  updateDate       DateTime          @default(now()) @updatedAt @db.Timestamp(6)
+  MST              String            @db.VarChar(200)
+  parentId         Int               @db.Int
+  parent           parent?           @relation(fields: [parentId], references: [id])
+  school           school?           @relation(fields: [MST], references: [MST])
+  transaction      transaction?
+  invoice_mappings invoice_mapping[]
+  bill_mapping_history bill_mapping_history[]
+}
+
+model transaction {
+  id                Int      @id @default(autoincrement())
+  billcode          String   @unique @db.VarChar(30)
+  desc              String?  @db.VarChar(100)
+  merchant_code     String   @db.VarChar(200)
+  other_info        String?  @db.VarChar(200)
+  return_url        String?  @db.VarChar(200)
+  amount            Decimal  @db.Decimal(10, 0)
+  login_msisdn      String?  @db.VarChar(200)
+  check_sum         String   @db.VarChar(200)
+  payment_status    String   @default("-1")
+  error_code        String?  @db.VarChar(10)
+  vt_transaction_id String?  @db.VarChar(200)
+  createDate        DateTime @default(now()) @db.Timestamp(6)
+  updateDate        DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  order_id          String   @db.VarChar(200)
+  bill              bill?    @relation(fields: [order_id], references: [id])
+
+}
+
+model student {
+  id              Int               @id @default(autoincrement())
+  BHYT            String            @unique @db.VarChar(200)
+  name            String            @db.VarChar(45)
+  classcode       String            @db.VarChar(45)
+  schoolId        Int               @db.Int
+  parentId        Int               @db.Int
+  gender          Gender            @default(UNKNOW)
+  school          school?           @relation(fields: [schoolId], references: [id])
+  parent          parent?           @relation(fields: [parentId], references: [id])
+  invoice_mapping invoice_mapping[]
+  invoice invoice[]
+}
+
+model invoice_mapping {
+  id         Int      @id @default(autoincrement())
+  billId     String?  @db.VarChar(200)
+  bhyt       String   @db.VarChar(200)
+  invoiceId  String   @unique @db.VarChar(200)
+  createDate DateTime @default(now()) @db.Timestamp(6)
+  updateDate DateTime @default(now()) @updatedAt @db.Timestamp(6)
+  bill       bill?    @relation(fields: [billId], references: [id])
+  student    student? @relation(fields: [bhyt], references: [BHYT])
+  invoice invoice? @relation(fields: [invoiceId], references:[id])
+}
+
+model bill_mapping_history {
+  id         Int      @id @default(autoincrement())
+  billId     String  @db.VarChar(200)
+  invoiceId  String   @db.VarChar(200)
+  bill       bill?    @relation(fields: [billId], references: [id])
+  invoice invoice?    @relation(fields: [invoiceId], references:[id])
+  status      String  @db.VarChar(200)
+}
+
+model merchant_code_key {
+  id                  Int             @id @default(autoincrement())
+  merchant_name       String          @db.VarChar(200)
+  merchant_code       String          @unique @db.VarChar(200)
+  hash_key            String          @db.Text 
+  access_code         String          @db.Text
+  schoolId            Int             @unique @db.Int
+  school              school?         @relation(fields: [schoolId], references: [id])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOW
 }
