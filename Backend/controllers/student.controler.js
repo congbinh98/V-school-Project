@@ -313,3 +313,89 @@ async function objSortFunction(field, sort) {
         return null;
     }
 }
+
+module.exports.getAllNoToken = async(req, res) => {
+    try {
+        var page = parseInt(req.query.page) || 1;
+        var limit = parseInt(req.query.limit) || 10;
+        // var search = req.query.search;
+        // var sortParam = req.query.sort;
+        // var fieldParam = req.query.field;
+        var schoolId = parseInt(req.query.schoolId);
+        var classCode = req.query.classCode;
+        var name = req.query.name;
+        var count = 0;
+        var listStudent;
+        // var sortObj;
+        // sortObj = await objSortFunction(fieldParam, sortParam);
+
+        // lay thong tin con
+        listStudent = await prisma.student.findMany({
+            // orderBy: {
+            //     ...sortObj
+            // },
+            skip: (page - 1) * limit,
+            take: limit,
+            where: {
+                schoolId: schoolId,
+                classcode: classCode,
+                name: name,
+            },
+            include: {
+                invoice_mapping: {
+                    where: {
+                        OR: [{
+                                billId: null,
+                            },
+                            {
+                                billId: '',
+                            },
+                            {
+                                bill: {
+                                    status: 'pending'
+                                },
+                            },
+                            {
+                                bill: {
+                                    status: 'cancel'
+                                },
+                            },
+                        ],
+                    },
+                    include: {
+                        invoice: true,
+                    },
+                },
+                parent: true,
+                school: {
+                    select: {
+                        id: true,
+                        account: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        count = await prisma.student.count({
+            where: {
+                schoolId: schoolId,
+                classcode: classCode,
+                name: name,
+            },
+        });
+
+        if (count === 0) {
+            return res.status(400).json({ ok: false, message: "Không tìm thấy học sinh nào!" });
+        }
+
+        return res.json({ ok: true, count: count, data: listStudent, message: "Lấy thông tin học sinh thành công!" });
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ ok: false, message: "Something went wrong" })
+    }
+
+}
