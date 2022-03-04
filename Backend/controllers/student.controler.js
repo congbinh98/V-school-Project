@@ -794,3 +794,79 @@ module.exports.createManyStudent = async function(req, res) {
         await prisma.$disconnect()
     }
 }
+
+// create student from thanhat
+module.exports.saveStudents = async(request, response) => {
+    try {
+        const school = await prisma.school.findUnique({ where: { accountId: request.user.id } });
+        const students = await prisma.student.findMany({ select: { BHYT: true } });
+        // bhyt có trong DB
+        const bhyts = students.map(x => x.BHYT);
+        // lấy dl từ thanhat
+        const res = await instance.post('/api/banks/nhan1truong', {
+                MST: school.MST
+            }, global.options)
+            .catch(function(error) {
+                console.log("Lấy dữ liệu thanhat thất bại!")
+                console.log(error.response.data)
+            });
+        const invoices = res.data.data;
+        if (invoices.length === 0) {
+            return response.status(400).json({ ok: false, message: "Bạn không có hóa đơn nào trong tháng này!" });
+        }
+        var bhytsTN = [];
+        invoices.forEach(element => {
+            var student = {
+                BHYT: element.MABHYT,
+                phoneParent: element.TEL1,
+                MST: element.MST,
+                classcode: element.MALOP,
+                name: element.HOTEN
+            }
+            bhytsTN.push(student)
+        });
+
+        // lucs này bhytsTN có tất cả các hoc sinh trên thanhat tháng này
+        // xóa các bhyt trùng trên thanhat
+        var bhytSet = new Set(bhytsTN);
+        bhytsTN = Array.from(bhytSet);
+
+        // xóa các số đã có trong DB
+        bhytsTN = bhytsTN.filter(val => !bhyts.includes(val.BHYT));
+        if (bhytsTN.length === 0) {
+            return response.status(400).json({ ok: false, message: "Không có học sinh mới trong tháng!" });
+        }
+
+        // list các học sinh add lỗi
+        var studentError = [];
+        for (let index = 0; index < bhytsTN.length; index++) {
+            const element = bhytsTN[index];
+            var schoolOfStudent = await prisma.school.findUnique({ where: { MST: element.MST } });
+            var parentOfStudent = await prisma.parent.findUnique({ where: { phone: element.phoneParent } });
+            if (!parentOfStudent) {
+                return response.status(400).json({ ok: false, message: "Phụ huynh của học sinh chưa tồn tại! Liên hệ admin" });
+            }
+            var saveData = await prisma.student.create({
+                data: {
+                    BHYT: element.BHYT,
+                    name: element.name,
+                    classcode: element.classcode,
+                    schoolId: schoolOfStudent.id,
+                    parentId: parentOfStudent.id
+                }
+            });
+            if (!saveData) {
+                studentError.push(element)
+            }
+        }
+        if (studentError.length !== 0) {
+            return response.json({ ok: true, message: "Lưu các học sinh " + studentError + " thất bại!\n Xin kiểm tra lại các học sinh này!" });
+        } else {
+            return response.json({ ok: true, message: "Lưu tất cả học sinh thành công" });
+        }
+
+    } catch (error) {
+        console.log(error);
+        return response.status(404).json({ ok: false, message: "Something went wrong" });
+    }
+}
