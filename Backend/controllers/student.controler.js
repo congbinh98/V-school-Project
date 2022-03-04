@@ -543,3 +543,48 @@ module.exports.getOne = async(req, res) => {
         return res.status(500).json({ ok: false, message: "Something went wrong" })
     }
 }
+
+// get one no token
+module.exports.getOneNoToken = async(req, res) => {
+    try {
+        var bhyt = req.params.bhyt;
+        var student = null;
+        student = await prisma.student.findUnique({
+            where: {
+                BHYT: bhyt,
+            },
+            include: {
+                invoice: {
+                    where: {
+                        updateDate: null
+                    }
+                },
+                parent: {
+                    select: {
+                        phone: true,
+                        childIds: true,
+                    }
+                },
+                school: {
+                    select: {
+                        phone: true,
+                        MST: true,
+                        account: {
+                            select: {
+                                name: true,
+                            }
+                        },
+                    },
+                },
+            }
+
+        });
+        if (!student) {
+            return res.status(400).json({ ok: false, message: "Không tìm thấy học sinh nào!" })
+        }
+        return res.json({ ok: true, data: student, message: "Lấy thông tin học sinh thành công!" })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ ok: false, message: "Something went wrong" })
+    }
+}
