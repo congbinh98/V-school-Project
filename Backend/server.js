@@ -35,7 +35,11 @@ app.use('/api/parents', parentRouter);
 const transactionRouter = require('./routes/transaction.routes');
 app.use('/api/transactions', transactionRouter);
 
+//notification routes
+const notiRoute = require("./routes/notification.routes");
+app.use('/api/notifications', notiRoute);
+
 // listen for requests
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+    console.log(`Server is listening on port ${port}`);
 });
