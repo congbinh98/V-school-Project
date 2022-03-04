@@ -137,3 +137,18 @@ module.exports.checkEmailUpdate = [
   .isLength({ min: 0, max: 3 }).withMessage('Tuổi không hợp lệ')
 
 ]
+
+module.exports.checkUpdateProfile = function(req, res, next) {
+  const simpleValidationResult = validationResult.withDefaults({
+      formatter: (err) => err.msg,
+  })
+  const errors = simpleValidationResult(req);
+  if (!errors.isEmpty()) {
+
+      return res.status(400).json({
+          ok: false,
+          message: errors.mapped()
+      })
+  }
+  next();
+}
