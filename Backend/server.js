@@ -27,6 +27,10 @@ app.use(function(err, req, res, next) {
 
 });
 
+//student routes
+const studentRouter = require('./routes/student.routes')
+app.use('/api/students', studentRouter);
+
 // partent routes
 const parentRouter = require('./routes/parent.routes');
 app.use('/api/parents', parentRouter);
