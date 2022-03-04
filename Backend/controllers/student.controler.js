@@ -588,3 +588,209 @@ module.exports.getOneNoToken = async(req, res) => {
         return res.status(500).json({ ok: false, message: "Something went wrong" })
     }
 }
+
+module.exports.createManyStudent = async function(req, res) {
+
+    const school = await prisma.school.findUnique({ where: { accountId: req.user.id } });
+    var mstOfSchool = school.MST;
+
+    if (req.file == undefined) {
+        return res.status(400).send({
+            ok: false,
+            message: "Vui lòng thêm file excel!"
+        });
+    }
+
+    const file = reader.readFile(req.file.path);
+
+    let data = []
+
+    const sheets = file.SheetNames
+
+    for (let i = 0; i < sheets.length; i++) {
+        const temp = reader.utils.sheet_to_json(
+            file.Sheets[file.SheetNames[i]])
+        temp.forEach((res) => {
+            data.push(res)
+        })
+    }
+
+    // Printing data
+    // console.log(data)
+
+    for (let index = 0; index < data.length; index++) {
+        if (data[index].BHYT === undefined ||
+            data[index].MALOP === undefined || data[index].MST === undefined
+        ) {
+            return res.status(400).send({
+                ok: false,
+                message: "Dữ liệu file excel chưa đúng!"
+            });
+        }
+        if (data[index].MST !== school.MST) {
+            return res.status(400).send({
+                ok: false,
+                message: "Có học sinh sai MST, vui lòng kiểm tra lại!"
+            });
+        }
+
+    }
+
+    // list thông tin sai (BHYT,SDT)
+    let countAddedStudent = 0;
+    // list học sinh thêm bị lỗi
+    var listFailed = [];
+    if (data.length === 0) {
+        return res.status(400).send({
+            ok: false,
+            message: "Vui lòng nhập dữ liệu vào file excel!"
+        });
+    }
+    try {
+        // list sdt phuj huynh trong file excel
+        const parentPhone = data.map(x => x.SDT);
+
+        // BEGIN thêm hoặc update phụ huynh
+        // for (let index = 0; index < parentPhone.length; index++) {
+        //     const element = parentPhone[index];
+        //     if (element === undefined) {
+        //         continue;
+        //     } else {
+        //         const upsertParent = await prisma.student.upsert({
+        //             where: {
+        //                 BHYT
+
+        //             },
+        //             update: {
+        //                 phone: element.toString()
+        //             },
+        //             create: {
+        //                 phone: element.toString(),
+        //                 account: {
+        //                     create: {
+        //                         id: element,
+        //                         name: 'Phụ huynh mới',
+        //                         email: 'null' + element,
+        //                         password: process.env.COMMONPASSWORD,
+        //                         status: 'ACTIVE',
+        //                         accRole: 'PARENT',
+        //                     }
+        //                 }
+        //             }
+        //         });
+        //     }
+
+        // } // END thêm phụ huynh 
+        // BEGIN thêm hoặc update học sinh
+        for (let index = 0; index < data.length; index++) {
+
+            if (data[index].SDT === undefined) {
+                listFailed.push(data[index].BHYT);
+                continue;
+            } else {
+                const studentOfParent = await prisma.student.findUnique({
+                    where: {
+                        BHYT: data[index].BHYT
+
+                    }
+                });
+                const parentOfStudent = await prisma.parent.findUnique({
+                    where: {
+                        phone: data[index].SDT
+                    }
+                })
+
+                // nếu đã có học sinh tồn tại thì update sdt, chưa thì thêm account +  parent
+                if (!studentOfParent && !parentOfStudent) {
+                    await prisma.account.create({
+                        data: {
+                            id: data[index].SDT,
+                            name: 'Phụ huynh mới',
+                            email: data[index].SDT + 'gmailNotfound',
+                            password: process.env.COMMONPASSWORD,
+                            status: 'ACTIVE',
+                            accRole: 'PARENT',
+                            parent: {
+                                create: {
+                                    phone: data[index].SDT
+                                }
+                            }
+                        },
+
+                    });
+                } else if (studentOfParent && !parentOfStudent) {
+                    console.log('Học sinh đã tồn tại nhưng SĐT ko tồn tại')
+                    listFailed.push(data[index].BHYT);
+                    continue;
+                }
+                // END thêm parent 
+
+                const parent = await prisma.parent.findUnique({
+                    where: {
+                        phone: data[index].SDT.toString()
+                    }
+                });
+
+                if (data[index].MST.toString() === mstOfSchool) {
+                    let gioitinh;
+
+                    if (data[index].GIOITINH !== undefined) {
+                        gioitinh = (data[index].GIOITINH === 'Nữ' ||
+                            data[index].GIOITINH === 'NỮ') ? 'FEMALE' : 'MALE'
+                    } else {
+                        gioitinh = null;
+                    }
+
+                    const createStudent = await prisma.student.upsert({
+                        where: {
+                            BHYT: data[index].BHYT.toString()
+                        },
+                        update: {
+                            name: (data[index].HOTEN !== undefined) ? data[index].HOTEN : data[index].HO.concat(` ${data[index].TEN}`),
+                            classcode: data[index].MALOP,
+                            gender: (gioitinh !== null) ? gioitinh : 'UNKNOW',
+                            parentId: parent.id
+                        },
+                        create: {
+                            BHYT: data[index].BHYT.toString(),
+                            name: (data[index].HOTEN !== undefined) ? data[index].HOTEN : data[index].HO.concat(` ${data[index].TEN}`),
+                            classcode: data[index].MALOP,
+                            schoolId: school.id,
+                            parentId: parent.id,
+
+                            gender: (gioitinh !== null) ? gioitinh : 'UNKNOW'
+                        }
+                    });
+                    countAddedStudent++;
+                } else {
+                    listFailed.push(data[index].BHYT);
+                }
+            }
+
+
+        } // END thêm học sinh
+        if (listFailed.length === 0) {
+            return res.json({ ok: true, message: "Thêm " + countAddedStudent + " học sinh thành công!" });
+        }
+        if (listFailed.length === data.length) {
+            return res.status(400).json({ ok: false, message: "Tất cả các học sinh bị lỗi!" });
+        } else {
+            return res.json({
+                ok: true,
+                message: "Thêm " + (data.length - listFailed.length) + " học sinh thành công, có " +
+                    listFailed.length + " học sinh bị sai thông tin. Vui lòng chỉnh sửa lại các học sinh có BHYT sau đây :",
+                listFailed: listFailed
+            });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            ok: false,
+            error: "Student data wrong, please check file excel!"
+        });
+
+    } finally {
+        async() =>
+        await prisma.$disconnect()
+    }
+}
