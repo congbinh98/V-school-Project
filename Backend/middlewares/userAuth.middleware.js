@@ -115,3 +115,25 @@ module.exports.isParent = async(req, res, next) => {
       res.status(403).json({ error: "Access denied" })
   }
 };
+
+module.exports.checkEmailUpdate = [
+  body('email')
+  .custom(async(value, { req }) => {
+      var emails = await prisma.account.findMany({ select: { email: true } });
+      emails = emails.map(x => x.email);
+      if ((value !== "") && emails.includes(value)) {
+          throw new Error('Email đã được sử dụng!');
+      }
+  }),
+  body('gender')
+  .isIn(["UNKNOW", "MALE", "FEMALE", ""])
+  .withMessage("Giới tính không hợp lệ"),
+  body('address')
+  .isLength({ min: 0 })
+  .isLength({ min: 0, max: 50 }).withMessage('Địa chỉ quá dài'),
+  body('name')
+  .isLength({ min: 0, max: 30 }).withMessage('Tên quá dài'),
+  body('age')
+  .isLength({ min: 0, max: 3 }).withMessage('Tuổi không hợp lệ')
+
+]
