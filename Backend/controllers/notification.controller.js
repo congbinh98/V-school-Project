@@ -189,3 +189,86 @@ async function checkInvoiceOfSchool(invoiceIds, mst) {
         }
     }
 }
+
+// set isRead all
+module.exports.setIsReadAll = async(req, res) => {
+    try {
+        const loginAccount = req.user;
+        const idOfNotis = req.body.ids;
+        // số noti update
+        var notiFirestore = 0;
+
+        // neu co truyen ids
+        if (idOfNotis.length !== 0) {
+            for (let index = 0; index < idOfNotis.length; index++) {
+                // check noti ton tai
+                let notification = await prisma.notification.findUnique({ where: { id: idOfNotis[index] } })
+
+                if (!notification) {
+                    return res.status(404).json({ ok: false, message: "Có thông báo không tồn tại!" })
+                }
+                if (loginAccount.id !== notification.to) {
+                    return res.status(404).json({ ok: false, message: "Có thông báo không phải của bạn!" })
+                }
+            }
+
+            idOfNotis.forEach(async element => {
+                await prisma.notification.update({
+                    where: { id: element },
+                    data: { isRead: true }
+                });
+                // update firestore
+                async function updateDocument(db) {
+                    const FieldValue = admin.firestore.FieldValue;
+                    const aNotiRef = db.collection('notifications').doc(`${element}`);
+                    const res = await aNotiRef.update({ isRead: true, createAt: FieldValue.serverTimestamp() }, )
+                        .then(function() {
+                            console.log("Document update with ID: ", aNotiRef.id);
+                            notiFirestore++;
+                        })
+                        .catch(function(error) {
+                            console.error("Error adding document: ", error);
+                        });
+                }
+                await updateDocument(db);
+            });
+            return res.json({ ok: true, message: "Cập nhật thông báo thành công!" })
+
+        }
+        // neu khong truyen body (ids legth = 0) thì set read all
+        await prisma.notification.updateMany({
+                where: { to: loginAccount.id },
+                data: { isRead: true }
+            })
+            // các thông báo của login account
+        const notisOfAccount = await prisma.notification.findMany({ where: { to: loginAccount.id } });
+        notisOfAccount.forEach(async element => {
+            // update firestore
+            async function updateAllDocument(db) {
+                const FieldValue = admin.firestore.FieldValue;
+                const aNotiRef = db.collection('notifications').doc(`${element.id}`);
+                const res = await aNotiRef.update({ isRead: true, createAt: FieldValue.serverTimestamp() })
+                    .then(function() {
+                        console.log("Document update with ID: ", aNotiRef.id);
+                        notiFirestore++;
+                    })
+                    .catch(function(error) {
+                        console.error("Error adding document: ", error);
+                    });;
+            }
+            await updateAllDocument(db);
+        });
+        // console.log(notiFirestore)
+        // if (notiFirestore === 0) {
+        //     return res.status(400).json({ ok: false, message: "Có lỗi khi cập nhật thông báo!" })
+        // }
+
+        return res.json({ ok: true, message: "Cập nhật thông báo thành công!" })
+    } catch (error) {
+        console.log(error);
+        return res.status(404).json({ ok: false, message: "Something went wrong" })
+    } finally {
+        async() =>
+        await prisma.$disconnect()
+    }
+}
