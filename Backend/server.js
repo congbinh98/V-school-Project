@@ -27,11 +27,15 @@ app.use(function(err, req, res, next) {
 
 });
 
+// partent routes
+const parentRouter = require('./routes/parent.routes');
+app.use('/api/parents', parentRouter);
+
+// transaction routes
+const transactionRouter = require('./routes/transaction.routes');
+app.use('/api/transactions', transactionRouter);
+
 // listen for requests
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
-
-// partent routes
-const parentRouter = require('./routes/parent.routes');
-app.use('/api/parents', parentRouter);
