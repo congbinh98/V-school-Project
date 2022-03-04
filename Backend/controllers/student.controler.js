@@ -399,3 +399,147 @@ module.exports.getAllNoToken = async(req, res) => {
     }
 
 }
+
+// get one
+module.exports.getOne = async(req, res) => {
+    try {
+        var userId = req.user.id;
+        var id = parseInt(req.params.id);
+        var student = null;
+        // neu parent logged
+        if (req.user.accRole === 'PARENT') {
+            const parent = await prisma.parent.findUnique({
+                where: {
+                    accountId: userId,
+                }
+            });
+            student = await prisma.student.findUnique({
+                where: {
+                    id: id,
+                },
+                include: {
+                    invoice_mapping: {
+                        where: {
+                            OR: [{
+                                    billId: null,
+                                },
+                                {
+                                    billId: '',
+                                },
+                                {
+                                    bill: {
+                                        status: 'pending'
+                                    },
+                                },
+                                {
+                                    bill: {
+                                        status: 'cancel'
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    parent: true,
+                    school: true,
+                }
+
+            });
+            if (student) {
+                if (!(student.parentId === parent.id)) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: "Bạn không phải phụ huynh của học sinh này!"
+                    })
+                };
+            };
+
+        }
+        // neu school logged
+        else if (req.user.accRole === 'SCHOOL') {
+            const school = await prisma.school.findUnique({
+                where: {
+                    accountId: userId,
+                }
+            })
+            student = await prisma.student.findFirst({
+                where: {
+                    id: id,
+                },
+                include: {
+                    invoice_mapping: {
+                        where: {
+                            OR: [{
+                                    billId: null,
+                                },
+                                {
+                                    billId: '',
+                                },
+                                {
+                                    bill: {
+                                        status: 'pending'
+                                    },
+                                },
+                                {
+                                    bill: {
+                                        status: 'cancel'
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    parent: true,
+                    school: true,
+                }
+
+            });
+            if (student) {
+                if (!(student.schoolId === school.id)) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: "Học sinh này không thuộc trường!"
+                    })
+                }
+            };
+        }
+        // neu admin logged
+        else if (req.user.accRole === 'SUPERADMIN') {
+            student = await prisma.student.findFirst({
+                where: {
+                    id: id,
+                },
+                include: {
+                    invoice_mapping: {
+                        where: {
+                            OR: [{
+                                    billId: null,
+                                },
+                                {
+                                    billId: '',
+                                },
+                                {
+                                    bill: {
+                                        status: 'pending'
+                                    },
+                                },
+                                {
+                                    bill: {
+                                        status: 'cancel'
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    parent: true,
+                    school: true,
+                }
+            });
+        }
+        if (!student) {
+            return res.status(400).json({ ok: false, message: "Không tìm thấy học sinh nào!" })
+        }
+        return res.json({ ok: true, data: student, message: "Lấy thông tin học sinh thành công!" })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ ok: false, message: "Something went wrong" })
+    }
+}
