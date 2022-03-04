@@ -83,3 +83,35 @@ module.exports.auth = async(req, res, next) => {
         await prisma.$disconnect()
     }
 };
+
+module.exports.isSupperAdmin = async(req, res, next) => {
+  try {
+      if (!(req.user.accRole === "SUPERADMIN")) {
+          throw new Error()
+      }
+      next();
+  } catch (error) {
+      res.status(403).json({ error: "Access denied" })
+  }
+};
+
+module.exports.isSchool = async(req, res, next) => {
+  try {
+      if (!(req.user.accRole === "SCHOOL")) {
+          throw new Error()
+      }
+      next()
+  } catch (error) {
+      res.status(403).json({ error: "Access denied" })
+  }
+};
+module.exports.isParent = async(req, res, next) => {
+  try {
+      if (!(req.user.accRole === "PARENT")) {
+          throw new Error()
+      }
+      next()
+  } catch (error) {
+      res.status(403).json({ error: "Access denied" })
+  }
+};
