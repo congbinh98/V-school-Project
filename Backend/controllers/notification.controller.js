@@ -154,3 +154,38 @@ module.exports.addOne = async(req, res) => {
         await prisma.$disconnect()
     }
 }
+
+
+// check invoice of school
+async function checkInvoiceOfSchool(invoiceIds, mst) {
+    try {
+        for (let index = 0; index < invoiceIds.length; index++) {
+            const element = invoiceIds[index];
+            const invoice = await prisma.invoice.findFirst({
+                where: {
+                    AND: [{
+                            id: element
+                        },
+                        {
+                            MST: mst
+                        }
+                    ]
+
+                }
+            });
+            if (!invoice) {
+                return false;
+            }
+        }
+
+
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    } finally {
+        async() => {
+            await prisma.$disconnect;
+        }
+    }
+}
