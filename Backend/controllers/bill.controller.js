@@ -75,3 +75,44 @@ module.exports.findAllByToken = async function(req, res) {
       await prisma.$disconnect()
   }
 }
+
+module.exports.findAllByParentId = async function(req, res) {
+  try {
+      if (!req.params.id) {
+          res.status(400).json({
+              ok: false,
+              error: "Please enter parentId!"
+          });
+      }
+      const parent = await prisma.parent.findUnique({
+          where: { id: Number(req.params.id) }
+      });
+      if (!parent) {
+          res.status(400).json({
+              ok: false,
+              error: "Phụ huynh không tồn tại!"
+          });
+      }
+      const bill = await prisma.bill.findMany({
+          where: { parentId: Number(req.params.id) },
+          include: {
+              bill_mapping_history: true,
+          }
+      });
+      if (bill.length === 0) {
+          res.status(400).json({
+              ok: false,
+              error: "Không tìm thấy bill nào!"
+          });
+      }
+      res.json({ ok: true, message: "Get bill successfully!", data: bill });
+  } catch (error) {
+      res.status(500).json({
+          ok: false,
+          error: "Something went wrong!"
+      });
+  } finally {
+      async() =>
+      await prisma.$disconnect()
+  }
+}
