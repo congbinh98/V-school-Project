@@ -43,6 +43,10 @@ app.use('/api/transactions', transactionRouter);
 const notiRoute = require("./routes/notification.routes");
 app.use('/api/notifications', notiRoute);
 
+// thanhat
+const thanhatRouter = require('./routes/superadmin.routes')
+app.use('/api/superadmin', thanhatRouter);
+
 // listen for requests
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
