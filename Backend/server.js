@@ -47,6 +47,10 @@ app.use('/api/transactions', transactionRouter);
 const notiRoute = require("./routes/notification.routes");
 app.use('/api/notifications', notiRoute);
 
+// bill routes
+const billRouter = require('./routes/bill.routes');
+app.use('/api/bills', billRouter);
+
 // thanhat
 const thanhatRouter = require('./routes/superadmin.routes')
 app.use('/api/superadmin', thanhatRouter);
