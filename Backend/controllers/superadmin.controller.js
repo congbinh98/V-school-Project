@@ -91,3 +91,75 @@ module.exports.saveDataPhuhuynh = async(request, response) => {
         await prisma.$disconnect()
     }
 }
+
+// save invoices
+module.exports.saveDataInvoices = async(request, response) => {
+  try {
+      const msts = await prisma.school.findMany({ select: { MST: true } });
+      // danh sach invoidID trong DB
+      var invoicesDB = [];
+      var invoiceFromDB = await prisma.invoice_mapping.findMany({ select: { invoiceId: true, bhyt: true } });
+      for (let index = 0; index < invoiceFromDB.length; index++) {
+          const element = invoiceFromDB[index];
+          invoicesDB.push(element);
+      }
+
+      // danh sách các invoidID từ thanhNhat
+      var invoicesTN = [];
+      for (let index = 0; index < msts.length; index++) {
+          // chạy từng mst
+          const element = msts[index];
+          const res = await instance.post('/api/banks/nhan1truong', {
+                  MST: element.MST
+              }, global.options)
+              .catch(function(error) {
+                  console.log("Lấy dữ liệu thanhat thất bại!")
+                  console.log(error.response.data)
+              })
+              // data invoice cua thanhnhat theo MST tháng hiện tại
+          const invoicesFromTN = res.data.data;
+          if (invoicesFromTN.length === 0) {
+              continue;
+          } else {
+              invoicesFromTN.forEach(element => {
+                  var invoice = {
+                      invoiceId: element.INVOIDID,
+                      bhyt: element.MABHYT
+                  }
+                  invoicesTN.push(invoice)
+              });
+          }
+      }
+      // lúc này invoicesTN sẽ có tất cả các invoice trên thanhat
+      // xóa các invoice mà invoiceID đã có trong DB
+      const setInvoicesId = new Set(invoicesDB.map(x => x.invoiceId));
+      invoicesTN = invoicesTN.filter(val => !setInvoicesId.has(val.invoiceId));
+      //bắt đầu lưu vào DB
+      if (invoicesTN.length === 0) {
+          return response.json({ ok: false, message: "Không có hóa đơn mới nào!" })
+      } else {
+          var saveData = null;
+          var i = 0;
+          while (i < invoicesTN.length) {
+              saveData = await prisma.invoice_mapping.create({
+                  data: {
+                      invoiceId: invoicesTN[i].invoiceId,
+                      bhyt: invoicesTN[i].bhyt
+                  },
+
+              })
+              i++
+          }
+          if (!saveData) {
+              return response.status(404).json({ ok: false, message: "Lưu data thất bại!" })
+          }
+          return response.json({ ok: true, message: "Lưu data thành công!" })
+      }
+
+  } catch (error) {
+      return response.status(404).json({ ok: false, message: "Something went wrong" })
+  } finally {
+      async() =>
+      await prisma.$disconnect()
+  }
+}
