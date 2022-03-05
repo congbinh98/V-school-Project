@@ -8,7 +8,280 @@ const instance = axios.create({
     baseURL: process.env.thanhatURL
 
 });
-// save invocie from thanhat
+// get one
+module.exports.getOne = async(req, response) => {
+        try {
+            const user = req.user;
+            var invoice = null;
+            if (user.accRole === 'PARENT') {
+                const parent = await prisma.parent.findUnique({ where: { accountId: user.id } });
+                invoice = await prisma.invoice.findMany({
+                    where: {
+                        AND: [{
+                                id: req.params.id
+                            }, {
+                                OR: [{
+                                    tel1: parent.phone
+                                }, {
+                                    tel2: parent.phone
+                                }]
+                            }
+
+                        ]
+                    }
+                });
+            } else if (user.accRole === 'SCHOOL') {
+                const school = await prisma.school.findUnique({ where: { accountId: user.id } });
+                invoice = await prisma.invoice.findMany({
+                    where: {
+                        AND: [{
+                            id: req.params.id
+                        }, {
+                            MST: school.MST
+                        }]
+                    }
+                });
+            } else {
+                return response.status(400).json({ ok: false, message: "Sai role" })
+            }
+            if (invoice.length !== 0) {
+                return response.json({ ok: true, data: invoice, message: "Lấy hóa đơn thành công!" })
+            }
+            return response.status(400).json({ ok: false, message: "Không tìm thấy hóa đơn!" })
+        } catch (error) {
+            console.log(error);
+            return response.status(404).json({ ok: false, message: "Something went wrong" })
+        } finally {
+            async() =>
+            await prisma.$disconnect()
+        }
+    }
+    // get all
+module.exports.getAll = async(req, res) => {
+        try {
+            // số invoices tìm thấy
+            var count = 0;
+            const user = req.user;
+            var invoice = null;
+            // các params query
+            var page = parseInt(req.query.page) || 1;
+            var limit = parseInt(req.query.limit) || 5;
+            var search = req.query.search;
+            var monthQuery = req.query.month;
+            var status = req.query.status;
+
+            var classNameQuery = req.query.className;
+            const sort = req.query.sort;
+            const field = req.query.field;
+            // obj sort
+            var objSort;
+            objSort = await objSortFunction(field, sort);
+            if (user.accRole === 'PARENT') {
+                const parent = await prisma.parent.findUnique({ where: { accountId: user.id } });
+                invoice = await prisma.invoice.findMany({
+                    skip: (page - 1) * limit,
+                    take: limit,
+                    orderBy: {
+                        ...objSort
+                    },
+                    where: {
+                        AND: [{
+                            OR: [{
+                                tel1: parent.phone
+                            }, {
+                                tel2: parent.phone
+                            }]
+                        }, {
+                            AND: [{
+                                month: monthQuery
+                            }, {
+                                className: {
+                                    contains: classNameQuery
+                                }
+                            }, {
+                                updateDate: status === "dathu" ? { not: null } : null
+                            }]
+                        }, {
+                            OR: [{
+                                    description: {
+                                        contains: search
+                                    }
+                                }, {
+                                    BHYT: {
+                                        contains: search
+                                    }
+                                }, {
+                                    className: {
+                                        contains: search
+                                    }
+                                }, {
+                                    id: {
+                                        contains: search
+                                    }
+                                },
+                                {
+                                    name: {
+                                        contains: search
+                                    }
+                                }
+                            ]
+                        }]
+                    },
+
+                });
+                count = await prisma.invoice.count({
+                    where: {
+                        AND: [{
+                            OR: [{
+                                tel1: parent.phone
+                            }, {
+                                tel2: parent.phone
+                            }]
+                        }, {
+                            AND: [{
+                                month: monthQuery
+                            }, {
+                                className: {
+                                    contains: classNameQuery
+                                }
+                            }, , {
+                                updateDate: status === "dathu" ? { not: null } : null
+                            }]
+                        }, {
+                            OR: [{
+                                    description: {
+                                        contains: search
+                                    }
+                                }, {
+                                    BHYT: {
+                                        contains: search
+                                    }
+                                }, {
+                                    className: {
+                                        contains: search
+                                    }
+                                }, {
+                                    id: {
+                                        contains: search
+                                    }
+                                },
+                                {
+                                    name: {
+                                        contains: search
+                                    }
+                                }
+                            ]
+                        }]
+                    },
+
+                });
+
+            } else if (user.accRole === 'SCHOOL') {
+                const school = await prisma.school.findUnique({ where: { accountId: user.id } });
+                invoice = await prisma.invoice.findMany({
+                    skip: (page - 1) * limit,
+                    take: limit,
+                    orderBy: {
+                        ...objSort
+                    },
+                    where: {
+                        AND: [{
+                            MST: school.MST
+                        }, {
+                            AND: [{
+                                month: monthQuery
+                            }, {
+                                className: {
+                                    contains: classNameQuery
+                                }
+                            }]
+                        }, {
+                            OR: [{
+                                    description: {
+                                        contains: search
+                                    }
+                                }, {
+                                    BHYT: {
+                                        contains: search
+                                    }
+                                }, {
+                                    className: {
+                                        contains: search
+                                    }
+                                }, {
+                                    id: {
+                                        contains: search
+                                    }
+                                },
+                                {
+                                    name: {
+                                        contains: search
+                                    }
+                                }, {
+                                    updateDate: status === "dathu" ? { not: null } : null
+                                }
+                            ]
+                        }]
+                    },
+
+                });
+                count = await prisma.invoice.count({
+                    where: {
+                        AND: [{
+                            MST: school.MST
+                        }, {
+                            AND: [{
+                                month: monthQuery
+                            }, {
+                                className: {
+                                    contains: classNameQuery
+                                }
+                            }, ]
+                        }, {
+                            OR: [{
+                                    description: {
+                                        contains: search
+                                    }
+                                }, {
+                                    BHYT: {
+                                        contains: search
+                                    }
+                                }, {
+                                    className: {
+                                        contains: search
+                                    }
+                                }, {
+                                    id: {
+                                        contains: search
+                                    }
+                                },
+                                {
+                                    name: {
+                                        contains: search
+                                    }
+                                }, {
+                                    updateDate: status === "dathu" ? { not: null } : null
+                                }
+                            ]
+                        }]
+                    },
+                });
+            } else {
+                return res.status(400).json({ ok: false, message: "Sai role" })
+            }
+            if (invoice.length !== 0 || !invoice) {
+                return res.json({ ok: true, count: count, data: invoice, message: "Lấy hóa đơn thành công!" })
+            }
+            return res.status(400).json({ ok: false, message: "Không tìm thấy hóa đơn!" })
+        } catch (error) {
+            console.log(error);
+            return res.status(404).json({ ok: false, message: "Something went wrong" })
+        } finally {
+            async() =>
+            await prisma.$disconnect()
+        }
+    }
+    // save invocie from thanhat
 module.exports.saveFromThanhhat = async(req, response) => {
         try {
             const schoolLogin = await prisma.school.findUnique({ where: { accountId: req.user.id } });
