@@ -24,7 +24,11 @@ app.use(function(err, req, res, next) {
     // error handling logic
     console.error(err.stack);
     res.status(500).json({ msg: "something wrong" });
+});
 
+// define a simple route
+app.get('/', (req, res) => {
+  res.json({ "message": "hello world" });
 });
 
 //student routes
