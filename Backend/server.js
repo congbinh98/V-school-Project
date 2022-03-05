@@ -59,6 +59,10 @@ app.use('/api/superadmin', thanhatRouter);
 const invoiceRouter = require('./routes/invoice.routes')
 app.use('/api/invoices', invoiceRouter);
 
+// paymentSDK routes
+const PaymentSDKRouter = require('./routes/paymentSDK.routes');
+app.use('/api/paymentSDK', PaymentSDKRouter);
+
 // listen for requests
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
