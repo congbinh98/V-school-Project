@@ -116,3 +116,26 @@ module.exports.findAllByParentId = async function(req, res) {
       await prisma.$disconnect()
   }
 }
+
+module.exports.findById = async function(req, res) {
+  try {
+      const bill = await prisma.bill.findUnique({
+          where: { id: req.params.id },
+          include: {
+              bill_mapping_history: true,
+          }
+      })
+      if (!bill) {
+          throw new Error()
+      }
+      res.json({ ok: true, message: "Get bill successfully!", data: bill });
+  } catch (error) {
+      res.status(500).json({
+          ok: false,
+          error: "Bill does not exist!"
+      });
+  } finally {
+      async() =>
+      await prisma.$disconnect()
+  }
+}
