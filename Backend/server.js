@@ -26,6 +26,13 @@ app.use(function(err, req, res, next) {
     res.status(500).json({ msg: "something wrong" });
 });
 
+//get token thanhat
+// const { getTokenThanhat } = require('./controllers/loginThanhat.controller')
+// getTokenThanhat();
+// setInterval(function() {
+//     getTokenThanhat();
+// }, 126000)
+
 // define a simple route
 app.get('/', (req, res) => {
     res.json({ "message": "hello world" });
