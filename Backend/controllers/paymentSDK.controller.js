@@ -309,8 +309,83 @@ module.exports.getResult = async function(req, res) {
       }
 
   } catch (error) {
-      console.log(error);
       res.status(500).send({
+          error_code: "01"
+      });
+
+  } finally {
+      async() =>
+      await prisma.$disconnect()
+  }
+}
+module.exports.queryTrans = async function(req, res) {
+  try {
+      var merchant_code = req.body.merchant_code;
+      var order_id = req.body.order_id;
+      var check_sum = req.body.check_sum;
+      var error_code_check = "01";
+      // find merchant in DB
+      const merchant = await prisma.merchant_code_key.findUnique({ where: { merchant_code: merchant_code } })
+      if (!(merchant_code === merchant.merchant_code)) {
+          return res.status(400).json({
+              error_code: error_code_check
+          });
+      }
+
+      const trans = await prisma.transaction.findUnique({
+              where: { billcode: order_id }
+          })
+          // find object by merchant_code in db
+      if (trans) {
+          // check match check_sum
+          var data = merchant.access_code + merchant.merchant_code + trans.order_id;
+
+          console.log(crypto.createHmac('SHA1', merchant.hash_key).update(data).digest('base64'));
+
+          // neu checksum dung'
+          if (check_sum === String(crypto.createHmac('SHA1', merchant.hash_key).update(data).digest('base64'))) {
+              //neu da lu giao dich thanh cong
+              if (!(trans.payment_status === "-1")) {
+
+                  data = merchant.access_code + "00" + merchant.merchant_code + trans.order_id;
+                  var check_sum_result = String(crypto.createHmac('SHA1', merchant.hash_key).update(data).digest('base64'));
+                  res.json({
+                      error_code: "00",
+                      merchant_code: merchant_code,
+                      order_id: order_id,
+                      return_url: "",
+                      return_bill_code: "",
+                      return_other_info: "",
+                      check_sum: check_sum_result
+                  });
+              } else {
+                  //luu ket qua giao dich that bai
+                  data = merchant.access_code + "01" + merchant.merchant_code + trans.order_id;
+                  var check_sum_result = String(crypto.createHmac('SHA1', merchant.hash_key).update(data).digest('base64'));
+                  res.json({
+                      error_code: "01",
+                      merchant_code: merchant_code,
+                      order_id: order_id,
+                      return_url: "",
+                      return_bill_code: "",
+                      return_other_info: "",
+                      check_sum: check_sum_result
+                  });
+              }
+          } else {
+              //checksum sai
+              return res.status(400).json({
+                  error_code: error_code_check
+              });
+          }
+      } else {
+          //trans ko ton tai
+          return res.status(400).json({
+              error_code: error_code_check
+          });
+      }
+  } catch (error) {
+      res.status(500).json({
           error_code: "01"
       });
 
