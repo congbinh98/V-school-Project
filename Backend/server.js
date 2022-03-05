@@ -28,7 +28,7 @@ app.use(function(err, req, res, next) {
 
 // define a simple route
 app.get('/', (req, res) => {
-  res.json({ "message": "hello world" });
+    res.json({ "message": "hello world" });
 });
 
 //student routes
@@ -54,6 +54,10 @@ app.use('/api/bills', billRouter);
 // thanhat
 const thanhatRouter = require('./routes/superadmin.routes')
 app.use('/api/superadmin', thanhatRouter);
+
+//invoice routes
+const invoiceRouter = require('./routes/invoice.routes')
+app.use('/api/invoices', invoiceRouter);
 
 // listen for requests
 app.listen(port, () => {
