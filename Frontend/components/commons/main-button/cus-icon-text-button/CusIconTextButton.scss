@@ -1,0 +1,44 @@
+.cusIconTextBtn:hover {
+  background-color: #ECECEC;
+}
+
+.cusIconTextBtn {
+  padding: .3rem .7rem;
+  border-radius: 10px 10px 0 0;
+  font-family: 'Nunito Sans';
+
+  height: 100%;
+  cursor: pointer;
+  transition: background-color ease-in-out .3s;
+
+  p {
+  }
+
+  &--depressed {
+    :hover {
+      background-color: #ececec00 !important;
+    }
+
+    background-color: #ececec00 !important;
+  }
+
+  &--small_icon {
+    img { 
+      padding: .2rem;
+    }
+  }
+
+  &--new {
+    position: relative;
+
+    ::after {
+      content: "";
+      background-color: var(--error);
+      padding: .3rem;
+      border-radius: 50%;
+      position: absolute;
+      right: 0%;
+    }
+  }
+}
+
