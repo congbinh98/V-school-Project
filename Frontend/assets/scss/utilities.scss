@@ -1,0 +1,126 @@
+
+@media only screen and (max-width: 1920px) {
+  .container {
+    max-width: 1200px !important;
+  }
+
+  .container--fluid {
+    max-width: 100% !important;
+  }
+}
+
+.separator {
+  border-style: solid;
+  border-color: var(--base-separator);
+  border-width: 0;
+
+  &--left {
+    border-left-width: 1px;
+  }
+}
+
+.v-dialog--fullscreen {
+  width: 81vw !important;
+  width: calc(100vw - 260px) !important;
+  top: 65px !important;
+  left: auto !important;
+  right: 0 !important;
+}
+
+.v-text-field__details {
+  padding-left: 0rem !important;
+}
+
+.v-input--is-disabled .v-input__slot {
+  background-color: #eaecef !important;
+
+  input {
+    font-style: italic;
+  }
+}
+
+.v-expansion-panel::before {
+  box-shadow: none !important;
+}
+
+.v-expansion-panel {
+  ::v-deep {
+    .v-expansion-panel-content > .v-expansion-panel-content__wrap {
+      padding: 0 0 1rem 0 !important;
+    }
+  }
+}
+
+.v-list--dense .v-list-item .v-list-item__title {
+}
+
+.v-list-item--link:before {
+  background-color: #eaecef00 !important;
+}
+
+.custom-container {
+  max-width: 1200px !important;
+}
+
+.v-toolbar__extension {
+  border-top: 1px solid #eaedf6;
+}
+
+.main-drawler .v-list-item__content {
+  margin-left: -1rem !important;
+}
+
+.v-application .title {
+  font-size: 1.8125rem !important;
+}
+
+//NOTE CUSTOM DATA-TABLE
+.v-data-table > .v-data-table__wrapper > table > thead > tr > th {
+  color: black !important;
+  transition: color ease-in-out 0.3s;
+}
+
+.v-data-table > .v-data-table__wrapper > table > thead {
+  background-color: #ebebeb;
+}
+
+.v-data-table > .v-data-table__wrapper > table > thead > tr > th:hover {
+  color: #0080ff !important;
+}
+
+.v-data-table > .v-data-table__wrapper > table > tbody > tr > td {
+}
+
+.v-data-table > .v-data-table__wrapper > table > tbody > tr > td:first-child {
+  border-radius: 0px 0px 0px 0px !important;
+}
+
+.v-data-table > .v-data-table__wrapper > table {
+  border: 1px solid #031b4d;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.v-data-table__wrapper > table > tbody > tr {
+  padding: .5rem 0rem;
+}
+
+.v-data-table__wrapper > table > tbody > tr > td:last-child{
+  a {
+    opacity: 0;
+  }
+}
+
+.v-data-table__wrapper > table > tbody > tr:hover > td:last-child{
+  a {
+    opacity: 1;
+  }
+}
+
+
+// END OF CUSTOM DATA-TABLE
+
+.v-input--selection-controls {
+  margin-top: 0px !important;
+  align-items: center;
+}
