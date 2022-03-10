@@ -1,0 +1,31 @@
+.expansion {
+
+    &__title {
+      color: #677694;
+    }
+  
+    &__body {
+      &__item {
+        &--active {
+          background-color: rgba(255,255,255,0.20392) !important;
+          color: white;
+  
+          .expansion__body__item__title {
+          }
+        }
+        &__title {
+          line-height: 1.25rem !important;
+          font-family: "Nunito Sans";
+        }
+      }
+    }  
+
+    .itemNoGroup {
+      &--active {
+        background-color: rgb(55,74,114) !important;
+
+        .v-list-item__title {
+        }
+      }
+    }
+}
