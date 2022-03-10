@@ -1,20 +1,20 @@
-# aa
+# Welcome
 
-## Build Setup
+The final project of SE1401 - Vschool project - connect children and school
 
+## Installation
+
+Use nodejs to run the project
+
+1. Installing the npm package
 ```bash
-# install dependencies
-$ npm install
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm run build
-$ npm run start
-
-# generate static project
-$ npm run generate
+npm install
+```
+2. Run the project
+```bash
+npm run dev
 ```
 
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+## Contributing
+Pull requests are only allow for the members
+## License
