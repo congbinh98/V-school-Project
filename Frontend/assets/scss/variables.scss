@@ -1,4 +1,47 @@
-// Ref: https://github.com/nuxt-community/vuetify-module#customvariables
-//
+:root {
+  --base-font-size: 14px;
+  --base-height-header: 6rem;
+  --base-separator: rgba(0, 0, 0, 0.12);
+  // Light
+  --text-light: #333;
+  --border-light: #000;
+  --background-light: #000;
+
+  // Dark
+  --text-dark: #fff;
+  --border-dark: #fff;
+  --background-dark: #fff;
+
+  // For design
+  //Sidebar
+  --sidebar-background: #231f20;
+  --text-active: #28495e;
+  --text-group: #1d3557;
+  --text-item: #457b9d;
+
+  //status
+  --error: #E63946;
+}
+
+@media screen and (min-width: 1920px) {
+  :root {
+    --base-font-size: 16px;
+  }
+}
+
 // The variables you want to modify
-// $font-size-root: 20px;
+$font-size-root: var(--base-font-size);
+// $border-radius-root: 10px;
+
+$pagination-item-margin: 0;
+$pagination-navigation-height: 34px;
+$pagination-navigation-margin: 0.3rem 0;
+
+$text-field-filled-full-width-outlined-slot-min-height: 48px !important;
+$expansion-panel-border-radius: 0px;
+$divider-inset-max-height	: calc(100% - 24px) !default;
+
+//table
+$data-table-border-radius: 10px;
+$data-table-regular-header-height: 39px !default;
+$data-table-regular-row-height: 60px;
