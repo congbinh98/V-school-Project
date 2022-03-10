@@ -27,3 +27,23 @@
 
 //   return position
 // }
+
+export function setExpireTime() {
+    return 3600 * 24 * 365 * 1;
+}
+
+export function arrayToQuery(array) {
+    let string = '';
+    array.forEach((item, index) => {
+        string += item;
+        if (index !== (array.length - 1)) {
+            string += ',';
+        }
+    });
+    return string;
+}
+
+export function numberToMoney(number, unit = 'VND') {
+    // return number.toLocaleString('it-IT', unit ? {style : 'currency', currency : unit} : {});
+    return new Intl.NumberFormat('vi-VN', unit ? { style: 'currency', currency: 'VND' } : {}).format(number);
+}
